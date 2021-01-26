@@ -1,14 +1,14 @@
 ##  Sloppy Jenkins - 
 ### Jenkins container development box
 
-#### Purpose: To have an instance of a running jenkins instance and to help develop shared libraries, debug, work with internals of Jenkins without the need to hit a production server.
+#### Purpose: To have a running jenkins instance; to develop shared libraries, debug, and work with internals. All this glory without the need to hit a production server.
 
 - 🔭 Write shared libraries easier by throwing them into working-libs folder and restarting jenkins locally 
 - 🌱 Run jenkins and learn internals 🤣
 - 👯 Collaborate with others, or be a lonewolf!
 - 🥅 Goals: ON A LOCAL POINT OF VIEW: Create shared libaries easier, work with helm, work with plugins, work with jobs, and many more.
 - ⚡ Facts: All your code-bass are belong to us! Well, after you code review it 🤣 🤣 🤣
-- ✍️ Write your own plugins and blow it up, safely, in the container!
+- ✍️ Write your own plugins... and blow it up, safely, in the container!
 
 ## GETTING STARTED
 
@@ -104,6 +104,8 @@ NOTE: Jenkins admin user/password is *admin/password*
 - This container is a Debian GNU/Linux 9 (stretch) image with latest Jenkins. Also installed is OpenJDK 1.8.0_242. Removing the USER jenkins from Dockerfile will keep root which is not recommended.
 
 - To end your Jenkins container experience, type: **docker kill local_dev_jenkins**
+
+- Any missspellingz and grammar? Pleae forigve. It's might late. I just got this prototype working and finally checking into my hub. It took the weekend to get it done, and late night to clean it up.. 
 
 
 
