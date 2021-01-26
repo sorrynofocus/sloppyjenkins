@@ -1,6 +1,7 @@
-##  Jenkins container development box
+##  Sloppy Jenkins - 
+### Jenkins container development box
 
-### Purpose: To have an instance of a running jenkins instance and to help develop shared libraries, debug, work with internals of Jenkins without the need to hit a production server.
+#### Purpose: To have an instance of a running jenkins instance and to help develop shared libraries, debug, work with internals of Jenkins without the need to hit a production server.
 
 - 🔭 Write shared libraries easier by throwing them into working-libs folder and restarting jenkins locally 
 - 🌱 Run jenkins and learn internals 🤣
