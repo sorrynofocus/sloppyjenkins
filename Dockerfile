@@ -13,7 +13,7 @@
 # docker run --name local_dev_jenkins -i -d -p 8787:8080 -p 50000:50000 -v C:\MNT\docker\jenkins\jenkins_home:/var/jenkins_home:rw local_dev_jenkins_host
 # These steps are in setup.bat and can be re-ran anytime to restart jenkins by issuing "restartjenkins"
 #
-FROM jenkins/jenkins:lts as JenkinsBaseImg
+FROM jenkins/jenkins:lts as jenkinsbaseimg
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 USER root
 RUN apt-get -y update && apt-get -y upgrade
@@ -22,18 +22,18 @@ RUN apt-get -y update && apt-get -y upgrade
 ########### End of third party software installs.
 
 # Begin Jenkins manipulation
-FROM JenkinsBaseImg as CertStage
+FROM jenkinsbaseimg as certstage
 
 #Had PKI type cert error. Here's solution:
 # Following website helped..
 # https://www.java-samples.com/showtutorial.php?tutorialid=210
 # Then I had to go to Jenkins.io update center and grab their cert. 
-COPY ./java-cert/cloud.cer /tmp/cloud.cer
-RUN keytool -storepass changeit -noprompt -list -keystore $JAVA_HOME/jre/lib/security/cacerts
-RUN keytool -storepass changeit -noprompt -import -alias myprivateroot2 -keystore $JAVA_HOME/jre/lib/security/cacerts -file /tmp/cloud.cer 
-RUN rm -rf /tmp/cloud.cer
+#COPY ./java-cert/cloud.cer /tmp/cloud.cer
+#RUN keytool -storepass changeit -noprompt -list -keystore $JAVA_HOME/jre/lib/security/cacerts
+#RUN keytool -storepass changeit -noprompt -import -alias myprivateroot2 -keystore $JAVA_HOME/jre/lib/security/cacerts -file /tmp/cloud.cer 
+#RUN rm -rf /tmp/cloud.cer
 
-FROM CertStage as JenkinsPlugInInstalls
+FROM certstage as jenkinsplugininstalls
 
 # #Plugins install - rem out COPY/RUN steps for debug and disable the prod copy/run steps
 # #COPY plugins.txt /var/jenkins_home/plugins.txt
@@ -42,7 +42,7 @@ FROM CertStage as JenkinsPlugInInstalls
 COPY ./plugins/plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli --verbose -f /usr/share/jenkins/ref/plugins.txt
 
-FROM JenkinsPlugInInstalls as JenkinsInitScripts
+FROM jenkinsplugininstalls as jenkinsinitscripts
 COPY ./init-scripts/setupusers.groovy /usr/share/jenkins/ref/init.groovy.d/setupusers.groovy
 COPY ./init-scripts/executors.groovy /usr/share/jenkins/ref/init.groovy.d/executors.groovy
 COPY ./init-scripts/security-cs.groovy /usr/share/jenkins/ref/init.groovy.d/security-cs.groovy

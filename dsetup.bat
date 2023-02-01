@@ -17,5 +17,7 @@ echo ***
 echo *** 3. If you need to get into Jenkins container, type:
 echo ***     docker exec -it local_dev_jenkins /bin/bash
 echo ***
+echo *** 4. Data persists at the VOLUME stated above: C:\MNT\docker\jenkins\jenkins_home
+echo ***
 
 
