@@ -1,4 +1,7 @@
 # Jenkins container development box
+# Version 2.470-jdk17 
+#URL: https://hub.docker.com/layers/jenkins/jenkins/latest/images/sha256-4e6ba65de63bda688a183605a7d31afeee5a1de8d9301cb6d20a5fdd06780e48?context=explore
+#
 # Purpose: To have an instance of a running jenkins instance and to help develop shared libraries, debug, work with internals of Jenkins without the need
 # to hit a production server.
 # Jenkins instance will be located at: 
@@ -13,10 +16,12 @@
 # docker run --name local_dev_jenkins -i -d -p 8787:8080 -p 50000:50000 -v C:\MNT\docker\jenkins\jenkins_home:/var/jenkins_home:rw local_dev_jenkins_host
 # These steps are in setup.bat and can be re-ran anytime to restart jenkins by issuing "restartjenkins"
 #
-FROM jenkins/jenkins:lts as jenkinsbaseimg
+# FROM jenkins/jenkins:lts as jenkinsbaseimg
+FROM jenkins/jenkins:2.470-jdk17 as jenkinsbaseimg 
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 USER root
 RUN apt-get -y update && apt-get -y upgrade
+USER jenkins
 ########### Other third party install go here.
 
 ########### End of third party software installs.
@@ -43,9 +48,12 @@ COPY ./plugins/plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli --verbose -f /usr/share/jenkins/ref/plugins.txt
 
 FROM jenkinsplugininstalls as jenkinsinitscripts
+COPY ./init-scripts/setdefaulturl.groovy /usr/share/jenkins/ref/init.groovy.d/setdefaulturl.groovy
 COPY ./init-scripts/setupusers.groovy /usr/share/jenkins/ref/init.groovy.d/setupusers.groovy
 COPY ./init-scripts/executors.groovy /usr/share/jenkins/ref/init.groovy.d/executors.groovy
 COPY ./init-scripts/security-cs.groovy /usr/share/jenkins/ref/init.groovy.d/security-cs.groovy
+COPY ./init-scripts/add-agent-creds.groovy /usr/share/jenkins/ref/init.groovy.d/add-agent-creds.groovy
+COPY ./init-scripts/create-ssh-agent.groovy /usr/share/jenkins/ref/init.groovy.d/create-ssh-agent.groovy
 # # Since init.groovy.d works with scripts alphabeticaly, assign file name with z
 # # This doesn't work, try to rem out the "Manual process to flag install completed" step
 COPY ./init-scripts/zetupcomplete.groovy /usr/share/jenkins/ref/init.groovy.d/zetupcomplete.groovy

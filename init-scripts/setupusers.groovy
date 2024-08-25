@@ -1,3 +1,4 @@
+//Create administrator account and permissions on jenkins instance.
 import jenkins.*
 import hudson.*
 import com.cloudbees.plugins.credentials.*
