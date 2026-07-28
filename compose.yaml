@@ -1,0 +1,14 @@
+name: docker-dynamic-jenkins-work
+services:
+  jenkins:
+    build: .
+    image: local_dev_jenkins_host
+    container_name: local_dev_jenkins
+    restart: unless-stopped
+    mem_limit: 4g
+    ports:
+      - "8787:8080"
+      - "50000:50000"
+    volumes:
+      - C:\MNT\docker\jenkins\jenkins_home:/var/jenkins_home
+    stdin_open: true

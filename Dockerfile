@@ -1,24 +1,24 @@
 # Jenkins container development box
-# Version 2.470-jdk17 
-#URL: https://hub.docker.com/layers/jenkins/jenkins/latest/images/sha256-4e6ba65de63bda688a183605a7d31afeee5a1de8d9301cb6d20a5fdd06780e48?context=explore
+# Version 2.574-jdk17 
+#URL: https://hub.docker.com/layers/jenkins/jenkins/2.574/images/sha256-f03163e30f15c2b169b45c931b830620c839bd3d5a9ff2055b7944d9e49f1137
 #
 # Purpose: To have an instance of a running jenkins instance and to help develop shared libraries, debug, work with internals of Jenkins without the need
 # to hit a production server.
 # Jenkins instance will be located at: 
 
-# BUILD WITH: 
-# docker build -t local_dev_jenkins_host .
+# BUILD WITH:
+# docker compose build
 #
 # RUN WITH:
-# mkdir C:\MNT\docker\jenkins\jenkins_home
-# docker stop local_dev_jenkins 
-# docker rm local_dev_jenkins
-# docker run --name local_dev_jenkins -i -d -p 8787:8080 -p 50000:50000 -v C:\MNT\docker\jenkins\jenkins_home:/var/jenkins_home:rw local_dev_jenkins_host
-# These steps are in setup.bat and can be re-ran anytime to restart jenkins by issuing "restartjenkins"
+# docker compose up -d
+# See compose.yaml for the image/container name, ports, and volume mapping.
+# Re-run "docker compose up -d" (add --build after editing this Dockerfile or plugins.txt)
+# any time you need to (re)start Jenkins.
 #
-# FROM jenkins/jenkins:lts as jenkinsbaseimg
-FROM jenkins/jenkins:2.470-jdk17 as jenkinsbaseimg 
-ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+# from  jenkins/jenkins:lts as jenkinsbaseimg
+FROM  jenkins/jenkins:2.574 AS jenkinsbaseimg 
+
+ENV JAVA_OPTS=-Djenkins.install.runSetupWizard=false
 USER root
 RUN apt-get -y update && apt-get -y upgrade
 USER jenkins
@@ -27,7 +27,7 @@ USER jenkins
 ########### End of third party software installs.
 
 # Begin Jenkins manipulation
-FROM jenkinsbaseimg as certstage
+FROM jenkinsbaseimg AS certstage
 
 #Had PKI type cert error. Here's solution:
 # Following website helped..
@@ -38,7 +38,7 @@ FROM jenkinsbaseimg as certstage
 #RUN keytool -storepass changeit -noprompt -import -alias myprivateroot2 -keystore $JAVA_HOME/jre/lib/security/cacerts -file /tmp/cloud.cer 
 #RUN rm -rf /tmp/cloud.cer
 
-FROM certstage as jenkinsplugininstalls
+FROM certstage AS jenkinsplugininstalls
 
 # #Plugins install - rem out COPY/RUN steps for debug and disable the prod copy/run steps
 # #COPY plugins.txt /var/jenkins_home/plugins.txt
@@ -47,13 +47,13 @@ FROM certstage as jenkinsplugininstalls
 COPY ./plugins/plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli --verbose -f /usr/share/jenkins/ref/plugins.txt
 
-FROM jenkinsplugininstalls as jenkinsinitscripts
+FROM jenkinsplugininstalls AS jenkinsinitscripts
 COPY ./init-scripts/setdefaulturl.groovy /usr/share/jenkins/ref/init.groovy.d/setdefaulturl.groovy
 COPY ./init-scripts/setupusers.groovy /usr/share/jenkins/ref/init.groovy.d/setupusers.groovy
 COPY ./init-scripts/executors.groovy /usr/share/jenkins/ref/init.groovy.d/executors.groovy
 COPY ./init-scripts/security-cs.groovy /usr/share/jenkins/ref/init.groovy.d/security-cs.groovy
-COPY ./init-scripts/add-agent-creds.groovy /usr/share/jenkins/ref/init.groovy.d/add-agent-creds.groovy
-COPY ./init-scripts/create-ssh-agent.groovy /usr/share/jenkins/ref/init.groovy.d/create-ssh-agent.groovy
+COPY ./init-scripts/add_agent_creds.groovy /usr/share/jenkins/ref/init.groovy.d/add_agent_creds.groovy
+COPY ./init-scripts/create_ssh_agent.groovy /usr/share/jenkins/ref/init.groovy.d/create_ssh_agent.groovy
 # # Since init.groovy.d works with scripts alphabeticaly, assign file name with z
 # # This doesn't work, try to rem out the "Manual process to flag install completed" step
 COPY ./init-scripts/zetupcomplete.groovy /usr/share/jenkins/ref/init.groovy.d/zetupcomplete.groovy
