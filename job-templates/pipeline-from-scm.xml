@@ -1,0 +1,35 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!--
+  Sloppy Jenkins template: Pipeline from SCM (provider-neutral, no webhook trigger).
+  Managed by init-scripts/40-job-templates.groovy and shown in Jenkins as Templates/pipeline-from-scm.
+  Copy it with New Item -> "Copy from", then set the repository URL, credential and branch, and enable the copy.
+-->
+<flow-definition plugin="workflow-job">
+  <actions/>
+  <description>TEMPLATE - do not run. Copy with New Item -&gt; "Copy from" Templates/pipeline-from-scm, then set the repository URL, credentials and branch, and enable your copy. The agent label is chosen by the project's Jenkinsfile (for example: agent { label 'windows-label' }).</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>https://example.invalid/YOUR/REPO.git</url>
+          <credentialsId>scm-credentials</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/main</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="empty-list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>Jenkinsfile</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

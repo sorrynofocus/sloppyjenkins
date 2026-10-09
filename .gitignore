@@ -1,0 +1,4 @@
+.env
+agent-secret.txt
+__pycache__/
+*.pyc

@@ -1,5 +1,9 @@
+# Name: The name of the Compose project. It is used as the name of the default network, and is prepended to the names of containers, networks,
+# and volumes.
 name: docker-dynamic-jenkins-work
+# Services: The list of services that make up the application. Each service is an instance of a container, and can be built from an image or from a Dockerfile.
 services:
+# jenkins: The name of the service. It is used as the name of the container, and is prepended to the names of networks and volumes.
   jenkins:
     build: .
     image: local_dev_jenkins_host
@@ -12,3 +16,11 @@ services:
     volumes:
       - C:\MNT\docker\jenkins\jenkins_home:/var/jenkins_home
     stdin_open: true
+    # Optional local settings (admin account, agent overrides). Copy .env.example to .env;
+    # .env is gitignored. Jenkins starts fine without it.
+    # format: raw passes every value literally (no $ interpolation, no quote or # processing),
+    # so passwords containing $, #, quotes or backslashes reach Jenkins unchanged.
+    env_file:
+      - path: .env
+        required: false
+        format: raw

@@ -89,6 +89,8 @@ git-server
 github
 github-api
 github-branch-source
+gitlab-plugin
+gitlab-api
 global-build-stats
 google-chat-notification
 google-compute-engine
@@ -221,6 +223,7 @@ validating-string-parameter
 variant
 versionnumber
 webhook-step
+webhook-relay
 workflow-aggregator
 workflow-api
 workflow-basic-steps

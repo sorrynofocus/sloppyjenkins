@@ -24,8 +24,8 @@ RECOMMENDED WORKFLOW:
 4. Review that snapshot, then copy the versions you want into plugins.txt to re-pin them.
 
 capture-installed-plugins.bat wraps capture-installed-plugins.ps1. By default it talks to
-http://localhost:8787 using the admin/password credentials from init-scripts/setupusers.groovy
-(same JENKINS_ADMIN_USERNAME/JENKINS_ADMIN_PASSWORD env var overrides apply); pass
+http://localhost:8787. Its old admin/password fallback no longer matches Jenkins: set JENKINS_ADMIN_USERNAME and
+JENKINS_ADMIN_PASSWORD (your Jenkins login, see the main README) before running it, or pass
 -JenkinsUrl/-Username/-Password to override for a different instance.
 
 ALSO RUN THIS BEFORE tearing down or upgrading the Jenkins instance - not just after a

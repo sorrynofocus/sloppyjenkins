@@ -1,0 +1,72 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!--
+  Sloppy Jenkins template (extra credit): Pipeline from SCM with a GitLab push / merge request trigger.
+  Managed by init-scripts/40-job-templates.groovy and shown in Jenkins as Templates/gitlab-pipeline-from-scm.
+
+  NOT webhook-ready as shipped: the per-job Secret Token is empty. While it is empty, and global "/project"
+  endpoint authentication is enabled (the default), GitLab requests need Jenkins user/API-token auth.
+  Give each copy its own secret (job trigger settings -> Advanced -> Generate, or tools\gitlab-webhook.bat).
+  See docs/extra-credit-gitlab-webhooks.md.
+-->
+<flow-definition plugin="workflow-job">
+  <actions/>
+  <description>TEMPLATE - do not run. Copy with New Item -&gt; "Copy from" Templates/gitlab-pipeline-from-scm, then set the repository URL, credentials and branch, generate a webhook Secret Token for the copy, and enable it. See docs/extra-credit-gitlab-webhooks.md.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <com.dabsquared.gitlabjenkins.GitLabPushTrigger plugin="gitlab-plugin">
+          <spec></spec>
+          <triggerOnPush>true</triggerOnPush>
+          <triggerToBranchDeleteRequest>false</triggerToBranchDeleteRequest>
+          <triggerOnMergeRequest>true</triggerOnMergeRequest>
+          <triggerOnlyIfNewCommitsPushed>false</triggerOnlyIfNewCommitsPushed>
+          <triggerOnPipelineEvent>false</triggerOnPipelineEvent>
+          <triggerOnFailedPipelineEvent>false</triggerOnFailedPipelineEvent>
+          <triggerOnAcceptedMergeRequest>false</triggerOnAcceptedMergeRequest>
+          <triggerOnClosedMergeRequest>false</triggerOnClosedMergeRequest>
+          <triggerOnApprovedMergeRequest>true</triggerOnApprovedMergeRequest>
+          <triggerOpenMergeRequestOnPush>never</triggerOpenMergeRequestOnPush>
+          <triggerOnNoteRequest>true</triggerOnNoteRequest>
+          <noteRegex>Jenkins please retry a build</noteRegex>
+          <ciSkip>true</ciSkip>
+          <skipWorkInProgressMergeRequest>true</skipWorkInProgressMergeRequest>
+          <labelsThatForcesBuildIfAdded></labelsThatForcesBuildIfAdded>
+          <setBuildDescription>true</setBuildDescription>
+          <branchFilterType>All</branchFilterType>
+          <includeBranchesSpec></includeBranchesSpec>
+          <excludeBranchesSpec></excludeBranchesSpec>
+          <sourceBranchRegex></sourceBranchRegex>
+          <targetBranchRegex></targetBranchRegex>
+          <secretToken></secretToken>
+          <pendingBuildName></pendingBuildName>
+          <cancelPendingBuildsOnUpdate>false</cancelPendingBuildsOnUpdate>
+          <cancelRunningBuildsOnUpdate>false</cancelRunningBuildsOnUpdate>
+        </com.dabsquared.gitlabjenkins.GitLabPushTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>https://gitlab.com/YOUR_GROUP/YOUR_PROJECT.git</url>
+          <credentialsId>scm-credentials</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/main</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="empty-list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>Jenkinsfile</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>
