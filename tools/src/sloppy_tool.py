@@ -13,7 +13,8 @@ The public commands intentionally match the former Java helper:
     selftest
 
 Credentials come only from environment variables or hidden prompts. They are
-never accepted as command-line arguments and are scrubbed from error messages.
+never accepted as command-line arguments and are scrubbed from error messages.V
+Vibe coded with Claude/Codex, Validated by winters
 """
 
 import base64
@@ -699,11 +700,23 @@ def gitlab_list_hooks(hooks_url: str, token: str) -> List[Any]:
             headers={"PRIVATE-TOKEN": token},
             timeout=30,
         )
-        if response.status in (401, 403):
+        if response.status == 401:
+            # 401: GitLab did not accept the token at all (wrong, expired, revoked, or not
+            # an API token). GitLab's own reason, such as "Token has expired.", is shown.
+            hint = ""
+            if token.startswith("gldt-"):
+                hint = " That is a deploy token; it can only clone or pull, not use the API."
             raise ToolError(
                 EXIT_AUTH,
-                "GitLab rejected the token (HTTP %d). It needs 'api' scope and "
-                "Maintainer on the project. Nothing changed." % response.status,
+                "GitLab did not accept this token (HTTP 401: %s). It is wrong, expired or "
+                "revoked, or not a personal access token.%s Nothing changed."
+                % (snippet(response.body), hint),
+            )
+        if response.status == 403:
+            raise ToolError(
+                EXIT_AUTH,
+                "GitLab accepted the token but refused access (HTTP 403). It needs the "
+                "'api' scope and Maintainer (or Owner) on the project. Nothing changed.",
             )
         if response.status == 404:
             raise ToolError(
@@ -826,20 +839,28 @@ def restore_jenkins(job_path: str, backup_xml: str, auth: str, reason: str) -> N
         )
 
 
+def require_path_argument(value: str, what: str, example: str) -> None:
+    # The helper takes names/paths, not URLs; say so before any token is asked for.
+    if "://" in value or value.startswith("git@"):
+        raise ToolError(
+            EXIT_ERROR,
+            "pass the %s, not a URL (for example: %s). Nothing changed." % (what, example),
+        )
+
+
 def gitlab_webhook(job_path: str, project: str) -> int:
+    require_path_argument(job_path, "Jenkins job path", "myproject, or folder/myproject")
+    require_path_argument(project, "GitLab project path", "mygroup/myproject")
+    # ngrok is checked before any token is asked for.
+    hook_url = public_jenkins_url() + "/project/" + project_url_path(job_path)
+    print("Webhook URL: %s" % hook_url)
     auth = jenkins_auth_header()
     gitlab_url = (env("GITLAB_URL") or "https://gitlab.com").rstrip("/")
     require_safe_url(gitlab_url, "GITLAB_URL")
-    gitlab_token = hidden_secret(
-        "GitLab personal access token ('api' scope, Maintainer on the project; "
-        "input is hidden): ",
-        "GITLAB_TOKEN",
-    )
     hooks_url = "%s/api/v4/projects/%s/hooks" % (
         gitlab_url,
         encode_query(project),
     )
-    hook_url = public_jenkins_url() + "/project/" + project_url_path(job_path)
     hook_name = HOOK_NAME_PREFIX + "/".join(split_path(job_path))
 
     config_response = jenkins(
@@ -865,6 +886,12 @@ def gitlab_webhook(job_path: str, project: str) -> int:
             "Templates/gitlab-pipeline-from-scm." % job_path,
         )
 
+    # Asked for only now, after the job and ngrok checked out.
+    gitlab_token = hidden_secret(
+        "GitLab personal access token ('api' scope, Maintainer on the project; "
+        "input is hidden): ",
+        "GITLAB_TOKEN",
+    )
     hooks = gitlab_list_hooks(hooks_url, gitlab_token)
     choice = choose_hook(hooks, hook_name, job_path)
     if choice.action == "AMBIGUOUS":
@@ -1001,6 +1028,19 @@ def selftest() -> int:
     check("jobUrlPath trims slashes", job_url_path("/a//b/") == "job/a/job/b/")
     check("projectUrlPath", project_url_path("Team A/my job") == "Team%20A/my%20job")
     check("query encoding", encode_query("group/sub/project") == "group%2Fsub%2Fproject")
+
+    def path_accepted(value: str) -> bool:
+        try:
+            require_path_argument(value, "path", "example")
+            return True
+        except ToolError:
+            return False
+
+    check("job path accepted", path_accepted("folder/myjob"))
+    check("project path accepted", path_accepted("mygroup/myproject"))
+    check("jenkins job URL rejected", not path_accepted("http://localhost:8787/job/powerprof"))
+    check("gitlab https URL rejected", not path_accepted("https://gitlab.com/grp/proj"))
+    check("gitlab ssh URL rejected", not path_accepted("git@gitlab.com:grp/proj.git"))
 
     hooks = [
         {"id": 1, "url": "https://old.ngrok-free.dev/project/other", "name": None},
@@ -1233,7 +1273,10 @@ def usage() -> None:
         "[credentialId] |",
         file=sys.stderr,
     )
-    print("       gitlab-webhook <jobPath> <group/project> | selftest", file=sys.stderr)
+    print(
+        "       gitlab-webhook <jobPath> <group/project>  (paths, not URLs) | selftest",
+        file=sys.stderr,
+    )
 
 
 def run(args: Sequence[str]) -> int:

@@ -178,7 +178,7 @@ The full walkthrough of the steps above, plus ngrok, revisiting the persisted Je
         SLOPPY_CRED_1_PASSWORD=your-token
         SLOPPY_CRED_1_DESCRIPTION=GitLab repository token
 
-    A credential is created _only_ if its credential ID doesn't exist yet; existing credentials are never overwritten (you can mod them in Manage Jenkins -> Credentials). Values are taken literally: no quotes! `.env` is plain text on disk and its values are visible to anyone who can run `docker inspect`, so once Jenkins has started _you can delete the password lines_. Jenkins keeps the credentials encrypted in the Credential Manager.
+    A credential is created _only_ if its credential ID doesn't exist yet; existing credentials are never overwritten (you can mod them in Manage Jenkins -> Credentials). Values are taken literally: no quotes! Special characters are fine in `USER` and `PASSWORD` (a GitLab deploy token's user name looks like `gitlab+deploy-token-16091230`), but the **ID** may only use letters, digits, `_`, `.` and `-` (so `gitlab-deploy-token-16091230`, not `gitlab+deploy-token-16091230`). `.env` is plain text on disk and its values are visible to anyone who can run `docker inspect`, so once Jenkins has started _you can delete the password lines_. Jenkins keeps the credentials encrypted in the Credential Manager.
 
       > Note: See `.env.example` and [init-scripts/README.txt](init-scripts/README.txt).
 
@@ -274,7 +274,7 @@ Without `--url`, ngrok assigns a random public URL that may change every time yo
 
 GitLab, GitHub, and other services are responsible for their own webhook or integration configuration. Jenkins plugins may provide provider-specific endpoints and authentication options.
 
-Optional extra credit: [docs/extra-credit-gitlab-webhooks.md](docs/extra-credit-gitlab-webhooks.md) shows one way to connect a GitLab project to a Jenkins job through ngrok, including a helper that sets up the webhook.
+Optional extra credit: [docs/extra-credit-gitlab-webhooks.md](docs/extra-credit-gitlab-webhooks.md) shows one way to connect a GitLab project to a Jenkins job through ngrok, including a helper that sets up the webhook (`tools\gitlab-webhook.bat <job path> <group/project>`; it needs ngrok running).
 
 Before exposing Jenkins, _make sure the admin password is strong and that authentication is enabled_! _**Never commit**_ the ngrok authtoken, Jenkins API tokens, SCM credentials, or webhook secrets.
 

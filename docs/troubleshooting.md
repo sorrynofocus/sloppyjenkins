@@ -90,7 +90,7 @@ The user is `admin`, unless `JENKINS_ADMIN_ID` was set.
 ### A credential I defined in .env was not created
 **Cause:** `init-scripts\20-username-credentials.groovy` skips a set when:
 - **a part is missing:** `ID`, `USER` and `PASSWORD` are all required (`DESCRIPTION` is optional);
-- **the ID has other characters:** only letters, digits, `_`, `.` and `-` are allowed;
+- **the ID has other characters:** only letters, digits, `_`, `.` and `-` are allowed. A common slip is copying a GitLab deploy token's user name (`gitlab+deploy-token-...`) into the ID: the `+` belongs in `USER`, which accepts any characters;
 - **the ID already exists:** existing credentials are never overwritten.
 
 **Fix:** check the log. It names the set and the missing variable (never the values):
@@ -251,6 +251,43 @@ Then open a new Command Prompt window. The helpers prefer the `py` launcher.
 ---
 
 ## GitLab webhooks and ngrok
+
+### gitlab-webhook.bat says "ngrok (local API on 127.0.0.1:4040) is not reachable"
+**Cause:** the helper needs Jenkins' public address for the webhook, and it gets it from ngrok's local API. ngrok isn't running, or it was started after the helper. GitLab.com can't call `localhost`, so without ngrok (or another public address) there is nothing to point a webhook at.
+
+**Fix:** start ngrok in its own window first (`ngrok http 8787`, or with `--url` for your reserved domain), then rerun the helper. If Jenkins is public some other way, `set NGROK_URL=https://your-public-address` instead. If you don't need GitLab.com to reach Jenkins, you don't need this helper.
+
+### gitlab-webhook.bat says "Jenkins job '...' not found" or "pass the ... path, not a URL"
+**Cause:** the helper takes **paths, not URLs**: the job's name in Jenkins and the GitLab project path. Passing `http://localhost:8787/job/myproject` or `https://gitlab.com/me/myproject.git` doesn't work. (Older versions of the helper asked for both tokens first and then reported the URL as a job that doesn't exist.)
+
+**Fix:** pass the job name (`folder/name` for a job in a folder) and the part of the GitLab URL after `https://gitlab.com/`, without `.git`:
+```cmd
+tools\gitlab-webhook.bat myproject me/myproject
+```
+
+### gitlab-webhook.bat says "GitLab did not accept this token (HTTP 401)"
+**Cause:** GitLab didn't recognize the token at all. The scopes don't matter yet: a token with too few rights gets HTTP 403 instead. Usual reasons:
+- a different token was pasted, for example a deploy token (`gldt-...`), which can only clone or pull;
+- the token is expired or revoked (GitLab still lists its scopes);
+- the paste picked up extra characters.
+
+Older versions of the helper reported 401 and 403 with the same message.
+
+**Fix:** check the token with hidden input; this prints only its name, scopes, active flag and expiry:
+```cmd
+py -3 -c "import getpass,json,urllib.request as u;t=getpass.getpass('GitLab token (hidden): ');d=json.load(u.urlopen(u.Request('https://gitlab.com/api/v4/personal_access_tokens/self',headers={'PRIVATE-TOKEN':t})));print({k:d.get(k) for k in ('name','scopes','active','revoked','expires_at')})"
+```
+If that ends in `HTTP Error 401`, create a new personal access token (avatar -> Edit profile -> Access tokens) with the **api** scope and rerun the helper.
+
+### gitlab-webhook.bat says "GitLab accepted the token but refused access (HTTP 403)"
+**Cause:** the token is valid, but it lacks the `api` scope, or your account isn't Maintainer (or Owner) on the project.
+
+**Fix:** use a token with `api`, or ask a project Owner to raise your role.
+
+### The build fails at checkout with "HTTP Basic: Access denied" (GitLab deploy token)
+**Cause:** the job's credential holds a GitLab **deploy token** (`gldt-...`) with your own GitLab user name. A deploy token only works with the user name GitLab gave it, such as `gitlab+deploy-token-12345678`. The webhook itself is fine: the build did start.
+
+**Fix:** in GitLab, the project -> Settings -> Repository -> Deploy tokens shows the token's **Username** (it also needs the `read_repository` scope). In Jenkins, Manage Jenkins -> Credentials -> your credential -> Update, set that user name and keep the password. For a future fresh start, use the same user name in `.env` (`SLOPPY_CRED_<n>_USER=gitlab+deploy-token-12345678`; the `+` is fine in a user name, just not in the ID). A deploy token is the right choice here: it can only read the repository. Use your personal access token for `tools\gitlab-webhook.bat`, not for cloning.
 
 ### GitLab's webhook test returns 401
 **Cause:** the job's GitLab trigger has no secret token, and Jenkins' `/project` endpoint authentication is on (the default), so GitLab must authenticate.
